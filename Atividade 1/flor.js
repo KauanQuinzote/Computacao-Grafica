@@ -6,7 +6,7 @@ if (!glFlor) {
     throw new Error("Não foi possível obter o contexto de WebGL");
 }
 
-function getCircle(cx, cy, radius, numSegments) {
+export function getCircle(cx, cy, radius, numSegments) {
     const verticesFlor = [cx, cy];
 
     for (let i = 0; i <= numSegments; i++) {
@@ -16,6 +16,7 @@ function getCircle(cx, cy, radius, numSegments) {
     }
     return verticesFlor;
 }
+
 const segNumFlor = 50;
 const flowerVertices = []
 const petalsNumber = 5;
