@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atividade 3 - Ping Pong WebGL 2D</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- ÁREA PRINCIPAL DO JOGO -->
+        <main class="game-area">
+            <header class="hud-header">
+                <div class="player-score player-1">
+                    <span class="player-name">JOGADOR 1</span>
+                    <span id="scoreP1" class="score-value">0</span>
+                </div>
+
+                <div class="game-status">
+                    <span id="gameStatusText" class="status-badge">PRONTO</span>
+                </div>
+
+                <div class="player-score player-2">
+                    <span id="scoreP2" class="score-value">0</span>
+                    <span class="player-name">JOGADOR 2</span>
+                </div>
+            </header>
+
+            <div class="canvas-wrapper">
+                <canvas id="glCanvas" width="800" height="800"></canvas>
+                
+                <!-- Overlay de Fim de Jogo / Pausa -->
+                <div id="gameOverlay" class="overlay hidden">
+                    <div class="overlay-card">
+                        <h2 id="overlayTitle">PARTIDA PAUSADA</h2>
+                        <p id="overlayMessage">Pressione ESPAÇO para continuar</p>
+                        <button id="btnOverlayAction" class="btn-primary">CONTINUAR</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- PAINEL LATERAL DE CONTROLES E INSTRUÇÕES -->
+        <aside class="control-panel">
+            <div class="panel-header">
+                <h2>PING PONG <span class="neon-tag">WebGL 2D</span></h2>
+                <p class="subtitle">Atividade 3 - Computação Gráfica</p>
+            </div>
+
+            <section class="panel-section">
+                <h3>Controle de Velocidade</h3>
+                <div class="speed-control">
+                    <div class="slider-label">
+                        <span>Velocidade da Bola:</span>
+                        <span id="speedValueText">1.0x</span>
+                    </div>
+                    <input type="range" id="speedSlider" min="0.5" max="3.0" step="0.1" value="1.0">
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <h3>Controles dos Jogadores</h3>
+                <div class="controls-grid">
+                    <div class="control-box p1-box">
+                        <span class="box-title">Jogador 1 (Esquerda)</span>
+                        <div class="key-group">
+                            <span class="key">W</span> <span class="key-desc">Subir</span>
+                        </div>
+                        <div class="key-group">
+                            <span class="key">S</span> <span class="key-desc">Descer</span>
+                        </div>
+                    </div>
+
+                    <div class="control-box p2-box">
+                        <span class="box-title">Jogador 2 (Direita)</span>
+                        <div class="key-group">
+                            <span class="key">▲</span> <span class="key-desc">Subir</span>
+                        </div>
+                        <div class="key-group">
+                            <span class="key">▼</span> <span class="key-desc">Descer</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <h3>Ações de Jogo</h3>
+                <div class="action-keys">
+                    <div class="key-group">
+                        <span class="key wide">ESPAÇO</span> <span class="key-desc">Pausar / Iniciar</span>
+                    </div>
+                    <div class="key-group">
+                        <span class="key">R</span> <span class="key-desc">Reiniciar Placar (0-0)</span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <h3>Regras</h3>
+                <ul class="rules-list">
+                    <li>O primeiro jogador a fazer <strong>10 pontos</strong> vence a partida!</li>
+                    <li>A bola rebate nas bordas superior e inferior.</li>
+                    <li>Ajuste a velocidade a qualquer momento pelo slider.</li>
+                </ul>
+            </section>
+
+            <footer class="panel-footer">
+                <button id="btnReset" class="btn-secondary">Reiniciar Jogo (R)</button>
+            </footer>
+        </aside>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
