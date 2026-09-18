@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computação Gráfica - Atividade 5: Robô Articulado 2D WebGL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Cabeçalho -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="badge-neon">Atividade 5</span>
+                <h1>Robô Articulado 2D <span>WebGL & Matrizes m3</span></h1>
+            </div>
+            <p class="subtitle">Transformações Hierárquicas 2D com Coordenadas Homogêneas</p>
+        </header>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <!-- Área do Canvas WebGL -->
+            <div class="canvas-card">
+                <div class="canvas-header">
+                    <div class="status-indicator">
+                        <span class="dot pulse"></span>
+                        <span id="fpsCounter">WebGL Active</span>
+                    </div>
+                    <div class="canvas-actions">
+                        <button id="btnViewMode" class="btn btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <span id="viewModeText">Visão Esteiras: De Frente</span>
+                        </button>
+                        <button id="btnAnimate" class="btn btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            Animação Automática
+                        </button>
+                        <button id="btnReset" class="btn btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                            Reset Pose
+                        </button>
+                    </div>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="glCanvas" width="800" height="600"></canvas>
+                </div>
+            </div>
+
+            <!-- Painel Lateral de Sliders -->
+            <aside class="controls-panel">
+                <h2>Articulações do Robô</h2>
+                
+                <!-- Grupo 1: Tronco (Raiz) -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot cyan"></span>
+                        Tronco (Raiz)
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="posX">Posição X</label>
+                            <span class="value-display" id="valPosX">400px</span>
+                        </div>
+                        <input type="range" id="posX" min="100" max="700" value="400">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="posY">Posição Y</label>
+                            <span class="value-display" id="valPosY">250px</span>
+                        </div>
+                        <input type="range" id="posY" min="100" max="500" value="250">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotTorso">Rotação Tronco</label>
+                            <span class="value-display" id="valRotTorso">0°</span>
+                        </div>
+                        <input type="range" id="rotTorso" min="-180" max="180" value="0">
+                    </div>
+                </section>
+
+                <!-- Grupo 2: Cabeça -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot yellow"></span>
+                        Cabeça
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotHead">Rotação Cabeça</label>
+                            <span class="value-display" id="valRotHead">0°</span>
+                        </div>
+                        <input type="range" id="rotHead" min="-60" max="60" value="0">
+                    </div>
+                </section>
+
+                <!-- Grupo 3: Braço Esquerdo -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot magenta"></span>
+                        Braço Esquerdo
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotShoulderL">Ombro Esquerdo</label>
+                            <span class="value-display" id="valRotShoulderL">20°</span>
+                        </div>
+                        <input type="range" id="rotShoulderL" min="-180" max="180" value="20">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotElbowL">Cotovelo Esquerdo</label>
+                            <span class="value-display" id="valRotElbowL">-30°</span>
+                        </div>
+                        <input type="range" id="rotElbowL" min="-135" max="45" value="-30">
+                    </div>
+                </section>
+
+                <!-- Grupo 4: Braço Direito -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot magenta"></span>
+                        Braço Direito
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotShoulderR">Ombro Direito</label>
+                            <span class="value-display" id="valRotShoulderR">-20°</span>
+                        </div>
+                        <input type="range" id="rotShoulderR" min="-180" max="180" value="-20">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotElbowR">Cotovelo Direito</label>
+                            <span class="value-display" id="valRotElbowR">30°</span>
+                        </div>
+                        <input type="range" id="rotElbowR" min="-45" max="135" value="30">
+                    </div>
+                </section>
+
+                <!-- Grupo 5: Pernas -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot green"></span>
+                        Pernas
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotLegL">Perna Esquerda</label>
+                            <span class="value-display" id="valRotLegL">0°</span>
+                        </div>
+                        <input type="range" id="rotLegL" min="-90" max="90" value="0">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotLegR">Perna Direita</label>
+                            <span class="value-display" id="valRotLegR">0°</span>
+                        </div>
+                        <input type="range" id="rotLegR" min="-90" max="90" value="0">
+                    </div>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Módulo Principal ES6 da Aplicação -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

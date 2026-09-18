@@ -13,7 +13,7 @@ class Paddle {
         this.y = y;
         this.width = width;
         this.height = height;
-        this.speed = 500.0; // píxeis por segundo
+        this.speed = 500.0;
         this.color = color;
     }
 
