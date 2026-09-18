@@ -16,8 +16,8 @@ export class Node2D {
 
         // Estilo Geométrico (0.0 = Retângulo com cantos vivos, 0.5 = Cápsula / Pontas Arredondadas)
         this.cornerRadius = 0.0;
-        this.shapeType = 'rect'; // 'rect' | 'trapezoid' | 'triangle'
-        this.visible = true;
+        this.shapeType = 'rect'; // 'rect' ou 'trapezoid'
+        this.topScale = 1.0; // Proporção da base superior para formato trapezoidal/triangular (ex: 0.55)
 
         // Matrizes de Transformação
         this.localMatrix = m3.identity();

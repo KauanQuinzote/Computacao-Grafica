@@ -42,9 +42,29 @@ export class WebGLRenderer {
             uniform vec4 u_color;
             uniform float u_cornerRadius;
             uniform float u_aspect;
+            uniform float u_shapeType; // 0.0 = rect, 1.0 = trapezoid
+            uniform float u_topScale;  // proporção da base superior (ex: 0.55)
             varying vec2 v_position;
 
             void main() {
+                if (u_shapeType > 0.5) {
+                    // Geometria Trapezoidal (base maior em baixo y=1.0, base menor no topo y=0.0)
+                    float topRatio = clamp(u_topScale, 0.1, 1.0);
+                    float hw = mix(0.5 * topRatio, 0.5, v_position.y);
+                    
+                    float r = min(u_cornerRadius * 0.3, min(hw, 0.3));
+                    float eff_hw = hw - r;
+                    float dx = abs(v_position.x) - eff_hw;
+                    float dy = max(-v_position.y, v_position.y - 1.0) + r;
+
+                    float dist = length(max(vec2(dx, dy), 0.0)) + min(max(dx, dy), 0.0) - r;
+                    float alpha = 1.0 - smoothstep(-0.015, 0.015, dist);
+                    if (alpha < 0.01) discard;
+
+                    gl_FragColor = vec4(u_color.rgb, u_color.a * alpha);
+                    return;
+                }
+
                 if (u_cornerRadius <= 0.001) {
                     gl_FragColor = u_color;
                     return;
@@ -89,7 +109,9 @@ export class WebGLRenderer {
                 matrix: this.gl.getUniformLocation(program, 'u_matrix'),
                 color: this.gl.getUniformLocation(program, 'u_color'),
                 cornerRadius: this.gl.getUniformLocation(program, 'u_cornerRadius'),
-                aspect: this.gl.getUniformLocation(program, 'u_aspect')
+                aspect: this.gl.getUniformLocation(program, 'u_aspect'),
+                shapeType: this.gl.getUniformLocation(program, 'u_shapeType'),
+                topScale: this.gl.getUniformLocation(program, 'u_topScale')
             }
         };
     }
@@ -108,10 +130,11 @@ export class WebGLRenderer {
     }
 
     initBuffers() {
-        // Buffer Retângulo unitário (pivô topo-centro)
-        const rectBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, rectBuffer);
-        const rectPositions = new Float32Array([
+        // Retângulo unitário com pivô no Topo-Centro (0.0, 0.0)
+        const positionBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+
+        const positions = new Float32Array([
             -0.5, 0.0,
              0.5, 0.0,
             -0.5, 1.0,
@@ -119,27 +142,11 @@ export class WebGLRenderer {
              0.5, 0.0,
              0.5, 1.0,
         ]);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, rectPositions, this.gl.STATIC_DRAW);
 
-        // Buffer Trapezoidal / Triângulo Escaleno (Base menor no topo, base maior embaixo)
-        const trapezoidBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, trapezoidBuffer);
-        const trapezoidPositions = new Float32Array([
-            -0.22, 0.0,
-             0.22, 0.0,
-            -0.55, 1.0,
-            -0.55, 1.0,
-             0.22, 0.0,
-             0.55, 1.0,
-        ]);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, trapezoidPositions, this.gl.STATIC_DRAW);
-
-        this.buffers = {
-            rect: rectBuffer,
-            trapezoid: trapezoidBuffer
-        };
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
 
         this.gl.enableVertexAttribArray(this.programInfo.attribs.position);
+        this.gl.vertexAttribPointer(this.programInfo.attribs.position, 2, this.gl.FLOAT, false, 0, 0);
     }
 
     clear(r = 0.024, g = 0.035, b = 0.055, a = 1.0) {
@@ -161,16 +168,6 @@ export class WebGLRenderer {
     }
 
     drawNode(node, projectionMatrix) {
-        if (node.visible === false) return;
-
-        // Seleciona o buffer de vértices conforme shapeType
-        if (node.shapeType === 'trapezoid' || node.shapeType === 'triangle') {
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.trapezoid);
-        } else {
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.rect);
-        }
-        this.gl.vertexAttribPointer(this.programInfo.attribs.position, 2, this.gl.FLOAT, false, 0, 0);
-
         // Mfinal = Mprojection * Mworld
         const finalMatrix = m3.multiply(projectionMatrix, node.worldMatrix);
 
@@ -184,8 +181,10 @@ export class WebGLRenderer {
         this.gl.uniform4fv(this.programInfo.uniforms.color, node.color);
         this.gl.uniform1f(this.programInfo.uniforms.cornerRadius, node.cornerRadius || 0.0);
         this.gl.uniform1f(this.programInfo.uniforms.aspect, aspect);
+        this.gl.uniform1f(this.programInfo.uniforms.shapeType, node.shapeType === 'trapezoid' ? 1.0 : 0.0);
+        this.gl.uniform1f(this.programInfo.uniforms.topScale, node.topScale !== undefined ? node.topScale : 1.0);
 
-        // Desenha os 6 vértices
+        // Desenha os 6 vértices do retângulo
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 
         // Recursão para os filhos
