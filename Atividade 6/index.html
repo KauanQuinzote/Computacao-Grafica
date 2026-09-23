@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computação Gráfica - Atividade 6: Helicóptero 3D WebGL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Cabeçalho -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="badge-neon">Atividade 6</span>
+                <h1>Helicóptero 3D <span>WebGL & Matrizes m4</span></h1>
+            </div>
+            <p class="subtitle">Transformações 3D Hierárquicas, Rotações e Animações de Hélices</p>
+        </header>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <!-- Área do Canvas WebGL -->
+            <div class="canvas-card">
+                <div class="canvas-header">
+                    <div class="status-indicator">
+                        <span class="dot pulse"></span>
+                        <span id="fpsCounter">WebGL 3D Active</span>
+                    </div>
+                    <div class="canvas-actions">
+                        <button id="btnAutoRotate" class="btn btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                            Auto Rotação
+                        </button>
+                        <button id="btnAnimatePropellers" class="btn btn-primary active">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            Girar Hélices
+                        </button>
+                        <button id="btnReset" class="btn btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="glCanvas" width="800" height="600"></canvas>
+                </div>
+                <div class="canvas-hints">
+                    <span>🖱️ <strong>Mouse:</strong> Clique e arraste na tela para rotacionar o helicóptero 3D livremente!</span>
+                </div>
+            </div>
+
+            <!-- Painel Lateral de Controles -->
+            <aside class="controls-panel">
+                <h2 class="panel-title">Controles de Transformação 3D</h2>
+                
+                <!-- Grupo 1: Rotação nos Eixos -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot cyan"></span>
+                        Rotação 3D (Ângulos)
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotX">Rotação X (Pitch)</label>
+                            <span class="value-display" id="valRotX">17°</span>
+                        </div>
+                        <input type="range" id="rotX" min="-180" max="180" value="17">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotY">Rotação Y (Yaw)</label>
+                            <span class="value-display" id="valRotY">28°</span>
+                        </div>
+                        <input type="range" id="rotY" min="-180" max="180" value="28">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotZ">Rotação Z (Roll)</label>
+                            <span class="value-display" id="valRotZ">0°</span>
+                        </div>
+                        <input type="range" id="rotZ" min="-180" max="180" value="0">
+                    </div>
+                </section>
+
+                <!-- Grupo 2: Translação -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot yellow"></span>
+                        Posição (Translação)
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="posX">Posição X</label>
+                            <span class="value-display" id="valPosX">0.00</span>
+                        </div>
+                        <input type="range" id="posX" min="-1.0" max="1.0" step="0.05" value="0">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="posY">Posição Y</label>
+                            <span class="value-display" id="valPosY">0.00</span>
+                        </div>
+                        <input type="range" id="posY" min="-1.0" max="1.0" step="0.05" value="0">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="posZ">Posição Z</label>
+                            <span class="value-display" id="valPosZ">0.00</span>
+                        </div>
+                        <input type="range" id="posZ" min="-1.0" max="1.0" step="0.05" value="0">
+                    </div>
+                </section>
+
+                <!-- Grupo 3: Escala / Zoom -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot green"></span>
+                        Escala / Zoom
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="scale">Escala Geral</label>
+                            <span class="value-display" id="valScale">0.70x</span>
+                        </div>
+                        <input type="range" id="scale" min="0.2" max="1.5" step="0.05" value="0.7">
+                    </div>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Scripts da Aplicação -->
+    <script src="m4.js"></script>
+    <script src="helicopterGeometry.js"></script>
+    <script src="renderer.js"></script>
+    <script src="sceneObject.js"></script>
+    <script src="scene.js"></script>
+
+    <!-- Inicialização WebGL e Shaders -->
+    <script>
+        const vertexShaderSource = `
+            attribute vec3 aPosition;
+            attribute vec3 aColor;
+
+            uniform mat4 u_modelTransform;
+
+            varying vec3 vColor;
+
+            void main() {
+                gl_Position = u_modelTransform * vec4(aPosition, 1.0);
+                vColor = aColor;
+            }
+        `;
+
+        const fragmentShaderSource = `
+            precision mediump float;
+            varying vec3 vColor;
+
+            void main() {
+                gl_FragColor = vec4(vColor, 1.0);
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error("Erro no Shader:", gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        function createProgram(gl, vs, fs) {
+            const program = gl.createProgram();
+            gl.attachShader(program, vs);
+            gl.attachShader(program, fs);
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error("Erro no Program:", gl.getProgramInfoLog(program));
+                gl.deleteProgram(program);
+                return null;
+            }
+            return program;
+        }
+
+        window.onload = function () {
+            const canvas = document.getElementById("glCanvas");
+            const gl = canvas.getContext("webgl");
+
+            if (!gl) {
+                alert("WebGL não suportado pelo seu navegador.");
+                return;
+            }
+
+            // Configuração do WebGL (Viewport, Fundo e Z-Buffer)
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            gl.clearColor(0.04, 0.06, 0.10, 1.0);
+            gl.enable(gl.DEPTH_TEST);
+
+            const vs = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+            const fs = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+            const program = createProgram(gl, vs, fs);
+
+            // Exportando para o escopo global (usado pelo scene.js)
+            window.gl = gl;
+            window.program = program;
+
+            const scene = new Scene(gl, program);
+            scene.init();
+
+            // Bind dos Controles UI
+            const rotXInput = document.getElementById("rotX");
+            const rotYInput = document.getElementById("rotY");
+            const rotZInput = document.getElementById("rotZ");
+            const posXInput = document.getElementById("posX");
+            const posYInput = document.getElementById("posY");
+            const posZInput = document.getElementById("posZ");
+            const scaleInput = document.getElementById("scale");
+
+            const valRotX = document.getElementById("valRotX");
+            const valRotY = document.getElementById("valRotY");
+            const valRotZ = document.getElementById("valRotZ");
+            const valPosX = document.getElementById("valPosX");
+            const valPosY = document.getElementById("valPosY");
+            const valPosZ = document.getElementById("valPosZ");
+            const valScale = document.getElementById("valScale");
+
+            const btnAutoRotate = document.getElementById("btnAutoRotate");
+            const btnAnimatePropellers = document.getElementById("btnAnimatePropellers");
+            const btnReset = document.getElementById("btnReset");
+
+            function updateUIFromScene() {
+                const degX = Math.round(scene.rotX * 180 / Math.PI);
+                const degY = Math.round(scene.rotY * 180 / Math.PI);
+                const degZ = Math.round(scene.rotZ * 180 / Math.PI);
+
+                rotXInput.value = (degX + 180) % 360 - 180;
+                rotYInput.value = (degY + 180) % 360 - 180;
+                rotZInput.value = (degZ + 180) % 360 - 180;
+
+                valRotX.textContent = `${rotXInput.value}°`;
+                valRotY.textContent = `${rotYInput.value}°`;
+                valRotZ.textContent = `${rotZInput.value}°`;
+
+                valPosX.textContent = Number(scene.posX).toFixed(2);
+                valPosY.textContent = Number(scene.posY).toFixed(2);
+                valPosZ.textContent = Number(scene.posZ).toFixed(2);
+                valScale.textContent = `${Number(scene.scaleVal).toFixed(2)}x`;
+            }
+
+            rotXInput.addEventListener("input", (e) => {
+                scene.rotX = parseFloat(e.target.value) * Math.PI / 180;
+                valRotX.textContent = `${e.target.value}°`;
+            });
+
+            rotYInput.addEventListener("input", (e) => {
+                scene.rotY = parseFloat(e.target.value) * Math.PI / 180;
+                valRotY.textContent = `${e.target.value}°`;
+            });
+
+            rotZInput.addEventListener("input", (e) => {
+                scene.rotZ = parseFloat(e.target.value) * Math.PI / 180;
+                valRotZ.textContent = `${e.target.value}°`;
+            });
+
+            posXInput.addEventListener("input", (e) => {
+                scene.posX = parseFloat(e.target.value);
+                valPosX.textContent = Number(scene.posX).toFixed(2);
+            });
+
+            posYInput.addEventListener("input", (e) => {
+                scene.posY = parseFloat(e.target.value);
+                valPosY.textContent = Number(scene.posY).toFixed(2);
+            });
+
+            posZInput.addEventListener("input", (e) => {
+                scene.posZ = parseFloat(e.target.value);
+                valPosZ.textContent = Number(scene.posZ).toFixed(2);
+            });
+
+            scaleInput.addEventListener("input", (e) => {
+                scene.scaleVal = parseFloat(e.target.value);
+                valScale.textContent = `${Number(scene.scaleVal).toFixed(2)}x`;
+            });
+
+            btnAnimatePropellers.addEventListener("click", () => {
+                scene.isAnimating = !scene.isAnimating;
+                btnAnimatePropellers.classList.toggle("active", scene.isAnimating);
+            });
+
+            btnAutoRotate.addEventListener("click", () => {
+                scene.autoRotate = !scene.autoRotate;
+                btnAutoRotate.classList.toggle("active", scene.autoRotate);
+            });
+
+            btnReset.addEventListener("click", () => {
+                scene.rotX = 0.3;
+                scene.rotY = 0.5;
+                scene.rotZ = 0.0;
+                scene.posX = 0.0;
+                scene.posY = 0.0;
+                scene.posZ = 0.0;
+                scene.scaleVal = 0.7;
+                scene.autoRotate = false;
+                scene.isAnimating = true;
+
+                btnAutoRotate.classList.remove("active");
+                btnAnimatePropellers.classList.add("active");
+
+                posXInput.value = 0;
+                posYInput.value = 0;
+                posZInput.value = 0;
+                scaleInput.value = 0.7;
+
+                updateUIFromScene();
+            });
+
+            // Interação com Mouse (Orbit / Drag para Rotacionar)
+            let isDragging = false;
+            let lastMouseX = 0;
+            let lastMouseY = 0;
+
+            canvas.addEventListener("mousedown", (e) => {
+                isDragging = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+            });
+
+            window.addEventListener("mouseup", () => {
+                isDragging = false;
+            });
+
+            canvas.addEventListener("mousemove", (e) => {
+                if (!isDragging) return;
+
+                const deltaX = e.clientX - lastMouseX;
+                const deltaY = e.clientY - lastMouseY;
+
+                scene.rotY += deltaX * 0.01;
+                scene.rotX += deltaY * 0.01;
+
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+
+                updateUIFromScene();
+            });
+
+            // Sincronizar UI se a auto rotação estiver ativa
+            setInterval(() => {
+                if (scene.autoRotate) {
+                    updateUIFromScene();
+                }
+            }, 100);
+        };
+    </script>
+</body>
+</html>
