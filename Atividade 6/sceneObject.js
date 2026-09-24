@@ -44,3 +44,9 @@ class HelicopterTailPropeller extends SceneObject {
         super(helicopterTailPropellerGeometry);
     }
 }
+
+class MarkerGizmo extends SceneObject {
+    constructor() {
+        super(markerGeometry);
+    }
+}

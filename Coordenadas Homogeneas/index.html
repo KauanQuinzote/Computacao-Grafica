@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador Interativo: Coordenadas Homogêneas 3D & Matrizes 4x4</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Cabeçalho com Seletor de Modelo 3D -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="badge-neon">Álgebra Linear & CG</span>
+                <h1>Coordenadas Homogêneas <span>[x, y, z, h] → [x', y', z', h']</span></h1>
+            </div>
+            <div class="header-model-selector">
+                <label for="modelSelect">Objeto 3D:</label>
+                <select id="modelSelect" class="select-model">
+                    <option value="cube">📦 Cubo Cartesiano 3D</option>
+                    <option value="pyramid">🔺 Pirâmide 3D</option>
+                    <option value="prism">🔷 Prisma Triangular</option>
+                    <option value="tetrahedron">💠 Tetraedro 3D</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Layout Principal: Canvas à Esquerda e Controles à Direita -->
+        <main class="main-content">
+            <!-- Card do Canvas 3D e Stepper de Decomposição -->
+            <div class="canvas-card">
+                <div class="canvas-header">
+                    <div class="status-indicator">
+                        <span class="dot"></span>
+                        <span id="canvasStatus">WebGL 3D Homogeneous Active</span>
+                    </div>
+                    <div class="canvas-actions">
+                        <button id="btnAutoRotateObj" class="btn btn-secondary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                            Girar Objeto
+                        </button>
+                        <button id="btnAutoRotateCam" class="btn btn-secondary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/></svg>
+                            Orbitar Câmera
+                        </button>
+                        <button id="btnResetAll" class="btn btn-secondary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Área do Canvas com HUD Overlay -->
+                <div class="canvas-wrapper" id="canvasWrapper">
+                    <canvas id="glCanvas" width="900" height="560"></canvas>
+
+                    <!-- HUD Flutuante da Matriz 4x4 do Passo Ativo -->
+                    <div class="matrix-hud-overlay">
+                        <div class="matrix-hud-header">
+                            <div class="matrix-hud-title">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+                                <span id="hudStepTitle">Matriz M (Passo Atual)</span>
+                            </div>
+                        </div>
+                        <div class="matrix-grid-container">
+                            <div class="matrix-legend">
+                                <span class="legend-tag rot">■ Rotação / Escala</span>
+                                <span class="legend-tag trans">■ Translação</span>
+                                <span class="legend-tag homo">■ Homogêneo</span>
+                            </div>
+                            <div class="matrix-grid-4x4">
+                                <div class="matrix-cell rot" id="m00">1.00</div>
+                                <div class="matrix-cell rot" id="m01">0.00</div>
+                                <div class="matrix-cell rot" id="m02">0.00</div>
+                                <div class="matrix-cell trans" id="m03">0.00</div>
+
+                                <div class="matrix-cell rot" id="m10">0.00</div>
+                                <div class="matrix-cell rot" id="m11">1.00</div>
+                                <div class="matrix-cell rot" id="m12">0.00</div>
+                                <div class="matrix-cell trans" id="m13">0.00</div>
+
+                                <div class="matrix-cell rot" id="m20">0.00</div>
+                                <div class="matrix-cell rot" id="m21">0.00</div>
+                                <div class="matrix-cell rot" id="m22">1.00</div>
+                                <div class="matrix-cell trans" id="m23">0.00</div>
+
+                                <div class="matrix-cell homo" id="m30">0.00</div>
+                                <div class="matrix-cell homo" id="m31">0.00</div>
+                                <div class="matrix-cell homo" id="m32">0.00</div>
+                                <div class="matrix-cell homo" id="m33">1.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stepper de Decomposição Passo-a-Passo -->
+                <div class="stepper-card">
+                    <div class="stepper-header">
+                        <h3>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            Pipeline de Transformação Homogênea (Passo a Passo)
+                        </h3>
+                    </div>
+                    <div class="stepper-steps-row">
+                        <button class="step-btn" data-step="0">
+                            <span class="step-number">Passo 0</span>
+                            <span class="step-name">Identidade (I)</span>
+                        </button>
+                        <button class="step-btn" data-step="1">
+                            <span class="step-number">Passo 1</span>
+                            <span class="step-name">+ Escala (S)</span>
+                        </button>
+                        <button class="step-btn" data-step="2">
+                            <span class="step-number">Passo 2</span>
+                            <span class="step-name">+ Rotação (R·S)</span>
+                        </button>
+                        <button class="step-btn active" data-step="3">
+                            <span class="step-number">Passo 3</span>
+                            <span class="step-name">Final (T·R·S)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel Lateral: Inspeção Vetorial, Controles de Transformação e Câmera -->
+            <aside class="controls-panel">
+                <!-- Seção 1: Inspeção de Vértice / Espaço [x, y, z, h] -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot magenta"></span>
+                        Espaço Homogêneo [x, y, z, h] → [x', y', z', h']
+                    </h3>
+                    <div class="vector-inspector-card">
+                        <div class="vector-select-row">
+                            <select id="vertexSelect" class="select-vertex">
+                                <!-- Preenchido dinamicamente com os vértices do modelo ativo -->
+                            </select>
+                            <button type="button" id="btnToggleCustom" class="btn btn-secondary" style="font-size: 0.72rem; padding: 3px 8px;">Modo Custom</button>
+                        </div>
+
+                        <!-- Multiplicação Vetorial Visual -->
+                        <div class="vector-multiplication-box">
+                            <!-- Vetor de Entrada v -->
+                            <div class="vector-col">
+                                <div class="vec-entry">
+                                    <span class="vec-lbl">x:</span>
+                                    <span class="vec-val" id="valInX">0.50</span>
+                                    <input type="number" step="0.1" class="vec-input-mini" id="inCustomX" value="0.50" style="display: none;">
+                                </div>
+                                <div class="vec-entry">
+                                    <span class="vec-lbl">y:</span>
+                                    <span class="vec-val" id="valInY">0.50</span>
+                                    <input type="number" step="0.1" class="vec-input-mini" id="inCustomY" value="0.50" style="display: none;">
+                                </div>
+                                <div class="vec-entry">
+                                    <span class="vec-lbl">z:</span>
+                                    <span class="vec-val" id="valInZ">0.50</span>
+                                    <input type="number" step="0.1" class="vec-input-mini" id="inCustomZ" value="0.50" style="display: none;">
+                                </div>
+                                <div class="vec-entry">
+                                    <span class="vec-lbl">h:</span>
+                                    <span class="vec-val" id="valInH">1.00</span>
+                                    <input type="number" step="0.1" class="vec-input-mini" id="inCustomH" value="1.00" style="display: none;">
+                                </div>
+                            </div>
+
+                            <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); font-weight: 700;">× M =</div>
+
+                            <!-- Vetor Transformado v' -->
+                            <div class="vector-col result">
+                                <div class="vec-entry">
+                                    <span class="vec-lbl">x':</span>
+                                    <span class="vec-val" id="valOutX">0.50</span>
+                                </div>
+                                <div class="vec-entry">
+                                    <span class="vec-lbl">y':</span>
+                                    <span class="vec-val" id="valOutY">0.50</span>
+                                </div>
+                                <div class="vec-entry">
+                                    <span class="vec-lbl">z':</span>
+                                    <span class="vec-val" id="valOutZ">0.50</span>
+                                </div>
+                                <div class="vec-entry">
+                                    <span class="vec-lbl">h':</span>
+                                    <span class="vec-val" id="valOutH">1.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Seção 2: Translação (Posição) -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot yellow"></span>
+                        Translação 3D (T)
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="posX">Posição X (Tx)</label>
+                            <span class="value-display" id="dispPosX">0.00</span>
+                        </div>
+                        <input type="range" id="posX" min="-1.5" max="1.5" step="0.05" value="0">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="posY">Posição Y (Ty)</label>
+                            <span class="value-display" id="dispPosY">0.00</span>
+                        </div>
+                        <input type="range" id="posY" min="-1.5" max="1.5" step="0.05" value="0">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="posZ">Posição Z (Tz)</label>
+                            <span class="value-display" id="dispPosZ">0.00</span>
+                        </div>
+                        <input type="range" id="posZ" min="-1.5" max="1.5" step="0.05" value="0">
+                    </div>
+                </section>
+
+                <!-- Seção 3: Rotações 3D -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot cyan"></span>
+                        Rotação 3D (Rx, Ry, Rz)
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotX">Rotação X</label>
+                            <span class="value-display" id="dispRotX">0°</span>
+                        </div>
+                        <input type="range" id="rotX" min="-180" max="180" value="0">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotY">Rotação Y</label>
+                            <span class="value-display" id="dispRotY">0°</span>
+                        </div>
+                        <input type="range" id="rotY" min="-180" max="180" value="0">
+                    </div>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="rotZ">Rotação Z</label>
+                            <span class="value-display" id="dispRotZ">0°</span>
+                        </div>
+                        <input type="range" id="rotZ" min="-180" max="180" value="0">
+                    </div>
+                </section>
+
+                <!-- Seção 4: Escala / Zoom -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot green"></span>
+                        Escala 3D (S)
+                    </h3>
+                    <div class="control-item">
+                        <div class="label-row">
+                            <label for="scale">Fator de Escala</label>
+                            <span class="value-display" id="dispScale">1.00x</span>
+                        </div>
+                        <input type="range" id="scale" min="0.2" max="2.0" step="0.05" value="1.0">
+                    </div>
+                </section>
+
+                <!-- Seção 5: Câmera & Ângulos de Visão -->
+                <section class="control-group">
+                    <h3>
+                        <span class="icon-dot purple"></span>
+                        Câmera & Ângulos de Visão
+                    </h3>
+                    <div class="camera-presets-grid">
+                        <button class="btn btn-secondary" data-cam="isometric">Isométrica</button>
+                        <button class="btn btn-secondary" data-cam="front">Frontal</button>
+                        <button class="btn btn-secondary" data-cam="top">Superior (Topo)</button>
+                        <button class="btn btn-secondary" data-cam="side">Lateral</button>
+                        <button class="btn btn-secondary" data-cam="reset">Reset Câmera</button>
+                    </div>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Scripts da Aplicação -->
+    <script src="m4.js"></script>
+    <script src="geometries.js"></script>
+    <script src="renderer.js"></script>
+    <script src="scene.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

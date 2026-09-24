@@ -46,6 +46,112 @@
                 </div>
                 <div class="canvas-wrapper">
                     <canvas id="glCanvas" width="800" height="600"></canvas>
+
+                    <!-- HUD Overlay: Matriz Homogênea 4x4 e Coordenadas [x,y,z,h] -->
+                    <div class="matrix-hud-overlay" id="matrixHud">
+                        <div class="matrix-hud-header">
+                            <div class="matrix-hud-title">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+                                <span>Matriz 4×4</span>
+                            </div>
+                            <select id="matrixModeSelect" class="matrix-select-compact">
+                                <option value="global">Base (T·R·S)</option>
+                                <option value="translation">Translação (T)</option>
+                                <option value="rotX">Rotação X (Rx)</option>
+                                <option value="rotY">Rotação Y (Ry)</option>
+                                <option value="rotZ">Rotação Z (Rz)</option>
+                                <option value="scale">Escala (S)</option>
+                                <option value="mainProp">Hélice Principal</option>
+                                <option value="tailProp">Hélice Cauda</option>
+                            </select>
+                        </div>
+
+                        <!-- Grade 4x4 da Matriz -->
+                        <div class="matrix-grid-container">
+                            <div class="matrix-legend">
+                                <span class="legend-tag rot">■ Rotação/Escala</span>
+                                <span class="legend-tag trans">■ Translação</span>
+                                <span class="legend-tag homo">■ Homogêneo</span>
+                            </div>
+                            <div class="matrix-grid-4x4" id="matrixGrid">
+                                <!-- 16 células preenchidas dinamicamente -->
+                                <div class="matrix-cell rot" id="m00">1.00</div>
+                                <div class="matrix-cell rot" id="m01">0.00</div>
+                                <div class="matrix-cell rot" id="m02">0.00</div>
+                                <div class="matrix-cell trans" id="m03">0.00</div>
+
+                                <div class="matrix-cell rot" id="m10">0.00</div>
+                                <div class="matrix-cell rot" id="m11">1.00</div>
+                                <div class="matrix-cell rot" id="m12">0.00</div>
+                                <div class="matrix-cell trans" id="m13">0.00</div>
+
+                                <div class="matrix-cell rot" id="m20">0.00</div>
+                                <div class="matrix-cell rot" id="m21">0.00</div>
+                                <div class="matrix-cell rot" id="m22">1.00</div>
+                                <div class="matrix-cell trans" id="m23">0.00</div>
+
+                                <div class="matrix-cell homo" id="m30">0.00</div>
+                                <div class="matrix-cell homo" id="m31">0.00</div>
+                                <div class="matrix-cell homo" id="m32">0.00</div>
+                                <div class="matrix-cell homo" id="m33">1.00</div>
+                            </div>
+                        </div>
+
+                        <!-- Seção Vetor Homogêneo [x,y,z,h] -->
+                        <div class="xyzh-section">
+                            <div class="xyzh-header">
+                                <span>Espaço [x, y, z, h] → [x', y', z', h']</span>
+                                <button type="button" id="btnToggleCustomPoint" class="btn-point-toggle">Modo Custom</button>
+                            </div>
+                            <div class="xyzh-transform-row">
+                                <!-- Vetor Original v -->
+                                <div class="vector-box" id="vectorInputBox">
+                                    <div class="vector-item">
+                                        <span class="coord-label">x:</span>
+                                        <span class="coord-val" id="valInX">0.00</span>
+                                        <input type="number" step="0.05" class="vector-input-mini" id="inputCustomX" value="0.00" style="display: none;">
+                                    </div>
+                                    <div class="vector-item">
+                                        <span class="coord-label">y:</span>
+                                        <span class="coord-val" id="valInY">0.00</span>
+                                        <input type="number" step="0.05" class="vector-input-mini" id="inputCustomY" value="0.00" style="display: none;">
+                                    </div>
+                                    <div class="vector-item">
+                                        <span class="coord-label">z:</span>
+                                        <span class="coord-val" id="valInZ">0.20</span>
+                                        <input type="number" step="0.05" class="vector-input-mini" id="inputCustomZ" value="0.20" style="display: none;">
+                                    </div>
+                                    <div class="vector-item">
+                                        <span class="coord-label">h:</span>
+                                        <span class="coord-val" id="valInH">1.00</span>
+                                        <input type="number" step="0.1" class="vector-input-mini" id="inputCustomH" value="1.00" style="display: none;">
+                                    </div>
+                                </div>
+
+                                <div class="vector-op-symbol">× M =</div>
+
+                                <!-- Vetor Transformado v' -->
+                                <div class="vector-box result">
+                                    <div class="vector-item">
+                                        <span class="coord-label">x':</span>
+                                        <span class="coord-val" id="valOutX">0.00</span>
+                                    </div>
+                                    <div class="vector-item">
+                                        <span class="coord-label">y':</span>
+                                        <span class="coord-val" id="valOutY">0.00</span>
+                                    </div>
+                                    <div class="vector-item">
+                                        <span class="coord-label">z':</span>
+                                        <span class="coord-val" id="valOutZ">0.20</span>
+                                    </div>
+                                    <div class="vector-item">
+                                        <span class="coord-label">h':</span>
+                                        <span class="coord-val" id="valOutH">1.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="canvas-hints">
                     <span>🖱️ <strong>Mouse:</strong> Clique e arraste na tela para rotacionar o helicóptero 3D livremente!</span>
@@ -357,6 +463,58 @@
                     updateUIFromScene();
                 }
             }, 100);
+
+            // Controles do HUD da Matriz Homogênea
+            const matrixModeSelect = document.getElementById("matrixModeSelect");
+            const btnToggleCustomPoint = document.getElementById("btnToggleCustomPoint");
+
+            const inputCustomX = document.getElementById("inputCustomX");
+            const inputCustomY = document.getElementById("inputCustomY");
+            const inputCustomZ = document.getElementById("inputCustomZ");
+            const inputCustomH = document.getElementById("inputCustomH");
+
+            const valInX = document.getElementById("valInX");
+            const valInY = document.getElementById("valInY");
+            const valInZ = document.getElementById("valInZ");
+            const valInH = document.getElementById("valInH");
+
+            matrixModeSelect.addEventListener("change", (e) => {
+                scene.matrixMode = e.target.value;
+            });
+
+            btnToggleCustomPoint.addEventListener("click", () => {
+                scene.isCustomPoint = !scene.isCustomPoint;
+                btnToggleCustomPoint.textContent = scene.isCustomPoint ? "Modo Rastreado" : "Modo Custom";
+                btnToggleCustomPoint.style.background = scene.isCustomPoint ? "var(--neon-green)" : "";
+                btnToggleCustomPoint.style.color = scene.isCustomPoint ? "#050811" : "";
+
+                const displaySpan = scene.isCustomPoint ? "none" : "inline";
+                const displayInput = scene.isCustomPoint ? "inline-block" : "none";
+
+                valInX.style.display = displaySpan;
+                valInY.style.display = displaySpan;
+                valInZ.style.display = displaySpan;
+                valInH.style.display = displaySpan;
+
+                inputCustomX.style.display = displayInput;
+                inputCustomY.style.display = displayInput;
+                inputCustomZ.style.display = displayInput;
+                inputCustomH.style.display = displayInput;
+            });
+
+            function updateCustomPointFromInputs() {
+                scene.customPoint = [
+                    parseFloat(inputCustomX.value) || 0,
+                    parseFloat(inputCustomY.value) || 0,
+                    parseFloat(inputCustomZ.value) || 0,
+                    parseFloat(inputCustomH.value) !== undefined ? parseFloat(inputCustomH.value) : 1.0
+                ];
+            }
+
+            inputCustomX.addEventListener("input", updateCustomPointFromInputs);
+            inputCustomY.addEventListener("input", updateCustomPointFromInputs);
+            inputCustomZ.addEventListener("input", updateCustomPointFromInputs);
+            inputCustomH.addEventListener("input", updateCustomPointFromInputs);
         };
     </script>
 </body>

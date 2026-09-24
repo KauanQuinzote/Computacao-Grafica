@@ -540,3 +540,33 @@ const helicopterTailPropellerGeometry = {
     colors: helicopterTailPropellerColors(),
     indices: helicopterTailPropellerIndices()
 };
+
+// ==================================================
+// MARKER / GIZMO GEOMETRY (Ponto Rastreado 3D)
+// ==================================================
+function createMarkerGeometry() {
+    const s = 0.035; // tamanho do marcador (pequeno octaedro / cubo de destaque)
+    const vertices = new Float32Array([
+         0,  s,  0,
+        -s,  0,  0,
+         0,  0,  s,
+         s,  0,  0,
+         0,  0, -s,
+         0, -s,  0
+    ]);
+    // Cor amarela/magenta neon de alto contraste
+    const colors = new Float32Array([
+        1.0, 0.2, 0.8,
+        1.0, 0.9, 0.0,
+        1.0, 0.2, 0.8,
+        1.0, 0.9, 0.0,
+        1.0, 0.2, 0.8,
+        0.0, 1.0, 0.9
+    ]);
+    const indices = new Uint16Array([
+        0, 1, 2,  0, 2, 3,  0, 3, 4,  0, 4, 1,
+        5, 2, 1,  5, 3, 2,  5, 4, 3,  5, 1, 4
+    ]);
+    return { vertices, colors, indices };
+}
+const markerGeometry = createMarkerGeometry();

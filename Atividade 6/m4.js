@@ -144,4 +144,18 @@ var m4 = {
     return m4.multiply(m4.scaling(sx, sy, sz),m);
   },
 
+  transformVector4: function(m, v) {
+    var x = v[0], y = v[1], z = v[2], w = (v[3] !== undefined ? v[3] : 1.0);
+    // m is column-major array of 16 elements:
+    // row 0: m[0], m[4], m[8],  m[12]
+    // row 1: m[1], m[5], m[9],  m[13]
+    // row 2: m[2], m[6], m[10], m[14]
+    // row 3: m[3], m[7], m[11], m[15]
+    return [
+      m[0] * x + m[4] * y + m[8]  * z + m[12] * w,
+      m[1] * x + m[5] * y + m[9]  * z + m[13] * w,
+      m[2] * x + m[6] * y + m[10] * z + m[14] * w,
+      m[3] * x + m[7] * y + m[11] * z + m[15] * w
+    ];
+  }
 };
